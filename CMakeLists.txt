@@ -70,68 +70,44 @@ get_target_property(OUT ${EXECUTABLE} LINK_LIBRARIES)
 message(STATUS ${OUT})
 
 # Compiler options
+	# See https://onlinedocs.microchip.com/oxy/GUID-BD1C16C8-7FA3-4D73-A4BE-241EE05EF592-en-US-5/GUID-AF6DD9C4-F930-4F63-A3DA-C94759DBCD75.html
 target_compile_options(${EXECUTABLE} PUBLIC
-	-mcpu=cortex-m7
-	-std=gnu17
-	-g3
-	-Og
-	-ffunction-sections
-	-fdata-sections
-	-Wall
-	# -fstack-usage
-	# -fcyclomatic-complexity
-	-mfpu=fpv5-d16
-	-mfloat-abi=hard
-	-mthumb
-	# -Wall
-	# -Wpedantic
-	# -Wno-unused-parameter
-	# -O0								# Optimize for size (that uses O2)
+	${CPU_PARAMETERS}			# `CPU_PARAMETERS` is from the `STM32XXXxx_HAL_PARA.cmake` files
+	-DSTM32H753xx
+	-std=gnu17					# C Language Standard
+	
+	-Wall						# Enablement of all warnings
+	-Wno-comment				# Warnings from suspicious comments
+	-Wno-switch					# Warnings from missing or extraneous case values
+	-Wno-unused-parameter		# Warnings from unused Parameters
+	-pedantic					# Warning demanded by strict ANSI C, rejects all programs with forbidden extensions
 
-	#${CPU_PARAMETERS}				# `CPU_PARAMETERS` is from the `STM32XXXxx_HAL_PARA.cmake` files
+	# Garbage Collection Flags: Requires "--gc-sections" in Linker
+	-ffunction-sections			# Places Functions into their own section for garbage collection
+	-fdata-sections				# Places objects in its own section for garbage collection
+
+	-Og							# Best optimization option for debugging
+
+	## MakeFile Flags: We use Ninja
+	# -MMD						# Generate Make rule for user headers
+	# -MP						# add Phony Target for Dependency
+	# -ggdb						# Produce debugging info for use by GDB
+
+	## Useful for getting more system metrics later
+	# -Wl, –print-memory-usage	# Returns size of program segments (Linker Flag)
+	# -fstack-usage				# Useful for analyzing the stack usage of individual functions
+	# -fcyclomatic-complexity	# quantitative measure of the number of linearly independent paths in a code section
 )
 
 # Linker options
 target_link_options(${EXECUTABLE} PUBLIC
 	-T${src_linker_script}
 	-Wl,-Map=${CMAKE_PROJECT_NAME}.map
-	-mcpu=cortex-m7
-	--specs=nosys.specs
-	-Wl,--gc-sections
-	-static
-	-mfpu=fpv5-d16
-	-mfloat-abi=hard
-	-mthumb -Wl,
-	--start-group
-	-lc 
-	-lm 
-	-Wl,
-	--end-group
-	#${CPU_PARAMETERS}
-	###
-	# -mcpu=cortex-m7
-	# -Wl,--gc-sections 
-	# -static 
-	# #--specs=nano.specs 
-	# -mfpu=fpv5-d16
-	# -mfloat-abi=hard 
-	# -mthumb
-	# -g3
-	# -Og
-	# -Wl,--start-group 
-	# -lc 
-	# -lm 
-	# -lstdc++ 
-	# -lsupc++ 
-	# -Wl,--end-group
-	###
-	# -Wl,--start-group
-	# -lc
-	# -lm
-	# -lstdc++
-	# -lsupc++
-	# -Wl,--end-group
-	# -Wl,--print-memory-usage
+	${CPU_PARAMETERS}
+	
+	#--specs=nosys.specs		# Defines that System Calls should be implemented as stubs
+	-Wl,--gc-sections			# Conducts the garbage collection
+	-static						# Links the Program statically, does not require a dependency on dynamic libraries at runtime to run. Handles .a files
 )
 
 # get_target_property(cflags ${EXECUTABLE} COMPILE_OPTIONS)
